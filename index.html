@@ -1,5 +1,4 @@
-
-    <!DOCTYPE html>
+<!DOCTYPE html>
     <html>
         <head>
         <meta charset="utf-8">
@@ -9,6 +8,26 @@
         <style>html, body {height: 100%;margin: 0;padding: 0;}</style>
         </head>
         <body>
+            <h1>Tile Dataset</h1>
+            <p>Click on a tile to view/download:</p>
+            <ul id="tile-list"></ul>
+        
+            <script>
+                fetch("tiles_imagery.json")
+                    .then(response => response.json())
+                    .then(tiles => {
+                        const list = document.getElementById("tile-list");
+                        tiles.forEach(tile => {
+                            const listItem = document.createElement("li");
+                            const link = document.createElement("a");
+                            link.href = `tiles/${tile}`;
+                            link.textContent = tile;
+                            listItem.appendChild(link);
+                            list.appendChild(listItem);
+                        });
+                    })
+                    .catch(error => console.error("Error loading tile list:", error));
+            </script>
             <div id="myMap" style="width:100%;height:100%"></div>
             <script type="text/javascript">
             var map = L.map('myMap', {crs: L.CRS.Simple,minZoom: 1, maxZoom:5, maxNativeZoom:5});
