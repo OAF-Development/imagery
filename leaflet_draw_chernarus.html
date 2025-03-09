@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Chernarus+ | Imagery | Satellite</title>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+        <style>html, body {height: 100%;margin: 0;padding: 0;}</style>
+    </head>
+    <body>
+        <div id="myMap" style="width:100%;height:100%"></div>
+        <script type="text/javascript">
+            var map = L.map('myMap', {crs: L.CRS.Simple, minZoom: 1, maxZoom: 5, maxNativeZoom: 5});
+            var tile = {tileSize: L.point(256, 256)};
+            L.tileLayer('{z}/{x}/{y}.png', tile).addTo(map);
+            map.setView([-128, 128], 1);
+
+            // Initialize the FeatureGroup to store editable layers
+            var drawnItems = new L.FeatureGroup();
+            map.addLayer(drawnItems);
+
+            // Customize the draw control options
+            var drawControl = new L.Control.Draw({
+                draw: {
+                    polyline: {
+                        shapeOptions: {
+                            color: '#f357a1',
+                            weight: 4
+                        }
+                    },
+                    polygon: {
+                        allowIntersection: false, // Restricts shapes to simple polygons
+                        drawError: {
+                            color: '#e1e100', // Color the shape will turn when intersects
+                            message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
+                        },
+                        shapeOptions: {
+                            color: '#bada55'
+                        }
+                    },
+                    rectangle: {
+                        shapeOptions: {
+                            color: '#ff7800'
+                        }
+                    },
+                    circle: {
+                        shapeOptions: {
+                            color: '#1e90ff'
+                        }
+                    },
+                    marker: {
+                        icon: new L.Icon.Default()
+                    }
+                },
+                edit: {
+                    featureGroup: drawnItems,
+                    remove: true
+                }
+            });
+            map.addControl(drawControl);
+
+            // Customize the vertex icon
+            L.Edit.SimpleShape.prototype._createMoveMarker = function () {
+                var center = this._shape.getBounds().getCenter();
+                this._moveMarker = this._createMarker(center, this.options.moveIcon);
+            };
+
+            L.Edit.SimpleShape.prototype._createResizeMarker = function () {
+                var corners = this._getCorners();
+                this._resizeMarkers = [];
+                for (var i = 0, l = corners.length; i < l; i++) {
+                    this._resizeMarkers.push(this._createMarker(corners[i], this.options.resizeIcon));
+                }
+            };
+
+            L.Edit.PolyVerticesEdit.prototype._createMarker = function (latlng, index) {
+                var marker = new L.Marker(latlng, {
+                    draggable: true,
+                    icon: new L.DivIcon({
+                        iconSize: new L.Point(8, 8),
+                        className: 'leaflet-div-icon leaflet-editing-icon'
+                    })
+                });
+                marker._origLatLng = latlng;
+                marker._index = index;
+                marker.on('drag', this._onMarkerDrag, this);
+                marker.on('dragend', this._fireEdit, this);
+                this._markerGroup.addLayer(marker);
+                return marker;
+            };
+
+            // Disable map interactions during drawing
+            map.on('draw:drawstart', function () {
+                map.dragging.disable();
+                map.doubleClickZoom.disable();
+                map.scrollWheelZoom.disable();
+            });
+
+            // Enable map interactions after drawing
+            map.on('draw:drawstop', function () {
+                map.dragging.enable();
+                map.doubleClickZoom.enable();
+                map.scrollWheelZoom.enable();
+            });
+
+            // Event listener for when a new layer is created
+            map.on(L.Draw.Event.CREATED, function (event) {
+                var layer = event.layer;
+                drawnItems.addLayer(layer);
+            });
+        </script>
+    </body>
+</html>
